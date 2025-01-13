@@ -1,59 +1,85 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
    <head>
-      <title>Timestamp Microservice | freeCodeCamp.org</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Microservices | freeCodeCamp.org</title>
       <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png" type="image/x-icon"/>
       <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
       <link href="/public/style.css" rel="stylesheet" type="text/css">
    </head>
 
    <body>
-    <h1>Timestamp Microservice</h1>
-    <hr />
-    <div class="container">
-      <h2>Example Usage:</h2>
-      <ul>
-        <li><a href="api/2015-12-25">[project url]/api/2015-12-25</a></li>
-        <li><a href="api/1451001600000">[project url]/api/1451001600000</a></li>
-      </ul>
+      <header>
+         <h1>Microservices Collection</h1>
+         <hr />
+      </header>
 
-      <h2>Example Output:</h2>
-      <p>
-        <code>{"unix":1451001600000, "utc":"Fri, 25 Dec 2015 00:00:00 GMT"}</code>
-      </p>
-    </div>
-    <div class="footer">
-      <p>
-        By <a href="https://www.freecodecamp.org/">freeCodeCamp.org</a>
-      </p>
-    </div>
+      <div class="container">
+         <!-- Timestamp Microservice -->
+         <section id="timestamp-microservice">
+            <h2>Timestamp Microservice</h2>
+            <p>Convert a date into a Unix timestamp and UTC format.</p>
 
-  <h1>URL Shortener Microservice</h1>
-    <main>
-      <section>
-        <form action="api/shorturl" method="POST">
-          <fieldset>
-            <legend>URL Shortener</legend>
-            <label for="url_input">URL:</label>
-            <input id="url_input" type="text" name="url" placeholder="https://www.freecodecamp.org/" />
-            <input type="submit" value="POST URL" />
-          </fieldset>
-        </form>
+            <h3>Example Usage:</h3>
+            <ul>
+               <li><a href="api/2015-12-25">[project url]/api/2015-12-25</a></li>
+               <li><a href="api/1451001600000">[project url]/api/1451001600000</a></li>
+            </ul>
 
-   <h2>Example Usage:</h2>
-<a href="https://boilerplate-project-timestamp-swart.vercel.app/api/shorturl/3">
-        [this_project_url]/api/shorturl/3
-      </a>
-      <h3>Will not Redirect to:</h3>
-      <p>https://forum.freecodecamp.org/</p>
+            <h3>Example Output:</h3>
+            <p><code>{"unix":1451001600000, "utc":"Fri, 25 Dec 2015 00:00:00 GMT"}</code></p>
+         </section>
          
-      </section>
+         <hr />
 
-       
-    </main>
+         <!-- URL Shortener Microservice -->
+         <section id="url-shortener-microservice">
+            <h2>URL Shortener Microservice</h2>
+            <p>Convert long URLs into short links.</p>
 
-      
-      
-  </body>
+            <form action="api/shorturl" method="POST">
+               <fieldset>
+                  <legend>URL Shortener</legend>
+                  <label for="url_input">Enter URL:</label>
+                  <input id="url_input" type="text" name="url" placeholder="https://www.freecodecamp.org/" required />
+                  <input type="submit" value="Shorten URL" />
+               </fieldset>
+            </form>
+
+            <h3>Example Usage:</h3>
+            <a href="https://boilerplate-project-timestamp-swart.vercel.app/api/shorturl/3">
+               [this_project_url]/api/shorturl/3
+            </a>
+
+            <h3>Expected Redirect:</h3>
+            <p>Will redirect to: <code>https://forum.freecodecamp.org/</code></p>
+         </section>
+
+         <hr />
+
+         <!-- Whoami Microservice -->
+         <section id="whoami-microservice">
+            <h2>Whoami Microservice</h2>
+            <p>Get details about your IP address, language, and software.</p>
+
+            <h3>Example Usage:</h3>
+            <p>Access the API by visiting: <code>[project url]/api/whoami</code></p>
+            <h3>Example Output:</h3>
+            <pre><code>{
+  "ipaddress": "192.168.0.1",
+  "language": "en-US",
+  "software": "Mozilla/5.0"
+}</code></pre>
+         </section>
+
+      </div>
+
+      <footer class="footer">
+         <p>
+            By <a href="https://www.freecodecamp.org/">freeCodeCamp.org</a>
+         </p>
+      </footer>
+   </body>
 </html>
