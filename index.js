@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const validUrl = require('valid-url');
 const shortid = require('shortid');
 const cors = require('cors');
+const path = require('path'); // Add this to handle file paths
 
 // Basic Configuration
 const app = express();
@@ -11,7 +12,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/public', express.static(`${process.cwd()}/public`));
+app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve public folder for static assets
 
 // MongoDB Connection
 const mongoUri = process.env.MONGO_URI;
@@ -41,8 +42,7 @@ const Url = mongoose.model('Url', urlSchema);
 
 // Homepage Route
 app.get('/', function(req, res) {
-  console.log('Serving index.html from:', process.cwd() + '/views/index.html');
-  res.sendFile(`${process.cwd()}/views/index.html`);
+  res.sendFile(path.join(__dirname, 'views', 'index.html')); // Serve index.html from views folder
 });
 
 // Whoami API Route
