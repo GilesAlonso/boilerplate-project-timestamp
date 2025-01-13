@@ -12,6 +12,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Add this to parse form data
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve public folder for static assets
 
 // MongoDB Connection
@@ -60,10 +61,10 @@ app.get("/api/whoami", (req, res) => {
 
 // URL Shortener Routes
 app.post('/api/shorturl', (req, res) => {
-  const { original_url } = req.body;
+  const { url } = req.body; // The form field name is 'url'
 
   // Check if the URL is valid
-  if (!validUrl.isWebUri(original_url)) {
+  if (!validUrl.isWebUri(url)) {
     return res.json({ error: 'invalid url' });
   }
 
@@ -72,14 +73,14 @@ app.post('/api/shorturl', (req, res) => {
 
   // Save to MongoDB
   const newUrl = new Url({
-    original_url,
+    original_url: url,
     short_url: shortUrl
   });
 
   newUrl.save()
     .then(() => {
       res.json({
-        original_url,
+        original_url: url,
         short_url: shortUrl
       });
     })
