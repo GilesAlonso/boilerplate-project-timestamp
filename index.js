@@ -7,8 +7,10 @@ const validUrl = require('valid-url');
 const shortid = require('shortid');
 
 // Basic Configuration
+const app = express();  // Initialize the Express app
 const port = process.env.PORT || 3000;
 
+const cors = require('cors');
 app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
@@ -45,8 +47,6 @@ const urlSchema = new mongoose.Schema({
 });
 
 const Url = mongoose.model('Url', urlSchema);
-
-
 
 // Whoami API Route
 app.get("/api/whoami", (req, res) => {
@@ -110,7 +110,6 @@ app.get('/api/shorturl/:shorturl', (req, res) => {
       res.status(500).send('Server Error');
     });
 });
-
 
 // Timestamp Microservice Routes
 app.get("/api/hello", (req, res) => {
