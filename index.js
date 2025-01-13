@@ -1,22 +1,16 @@
-// index.js
-// where your node app starts
+// Load environment variables from .env file
+require('dotenv').config();
 
-// init project
-var express = require('express');
-var app = express();
+const express = require('express');
+const mongoose = require('mongoose');
 const validUrl = require('valid-url');
 const shortid = require('shortid');
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+// Initialize app
+const app = express();
 
 // Middleware
 app.use(express.json());
-
-// http://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'));
 
 // MongoDB Connection
 const mongoUri = process.env.MONGO_URI; // Mongo URI from environment variable
@@ -45,11 +39,19 @@ const urlSchema = new mongoose.Schema({
 const Url = mongoose.model('Url', urlSchema);
 
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
-});
 
+// Whoami API Route
+app.get("/api/whoami", (req, res) => {
+  const ipaddress = req.ip;
+  const language = req.get('Accept-Language');
+  const software = req.get('User-Agent');
+
+  res.json({
+    ipaddress,
+    language,
+    software
+  });
+});
 
 // URL Shortener Routes
 app.post('/api/shorturl', (req, res) => {
@@ -101,70 +103,28 @@ app.get('/api/shorturl/:shorturl', (req, res) => {
     });
 });
 
-// /api/whoami endpoint
-app.get("/api/whoami", (req, res) => {
-  const ipaddress = req.ip;
-  const language = req.get('Accept-Language');
-  const software = req.get('User-Agent');
+
+// Timestamp Microservice Routes
+app.get("/api/hello", (req, res) => {
+  res.json({ greeting: 'hello API' });
+});
+
+app.get("/api/:date?", (req, res) => {
+  const dateString = req.params.date || ''; // If no date provided, use current date
+  const date = dateString ? new Date(dateString) : new Date();
+
+  if (isNaN(date.getTime())) {
+    return res.json({ error: 'Invalid Date' });
+  }
 
   res.json({
-    ipaddress,
-    language,
-    software
+    unix: date.getTime(),
+    utc: date.toUTCString()
   });
 });
 
-
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
-});
-
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
-});
-
-// Debugging log
-app.use((req, res, next) => {
-  console.log(`Received request for ${req.method} ${req.url}`);
-  next();
-});
-
-// API endpoint to handle date requests
-app.get("/api/:date?", function (req, res) {
-  let dateParam = req.params.date;
-
-  let date;
-
-  // If no date is provided, use the current date
-  if (!dateParam) {
-    date = new Date();
-  } else {
-    // Check if dateParam is a number (Unix timestamp in milliseconds)
-    if (!isNaN(dateParam)) {
-      date = new Date(parseInt(dateParam));
-    } else {
-      date = new Date(dateParam);
-    }
-  }
-
-  // Validate the date
-  if (date.toString() === "Invalid Date") {
-    res.json({ error: "Invalid Date" });
-  } else {
-    res.json({
-      unix: date.getTime(),
-      utc: date.toUTCString()
-    });
-  }
-});
-
-
-
-
-
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
