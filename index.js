@@ -19,6 +19,20 @@ app.get("/", function (req, res) {
 });
 
 
+// /api/whoami endpoint
+app.get("/api/whoami", (req, res) => {
+  const ipaddress = req.ip;
+  const language = req.get('Accept-Language');
+  const software = req.get('User-Agent');
+
+  res.json({
+    ipaddress,
+    language,
+    software
+  });
+});
+
+
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
   res.json({greeting: 'hello API'});
@@ -64,18 +78,7 @@ app.get("/api/:date?", function (req, res) {
   }
 });
 
-// /api/whoami endpoint
-app.get("/api/whoami", (req, res) => {
-  const ipaddress = req.ip;
-  const language = req.get('Accept-Language');
-  const software = req.get('User-Agent');
 
-  res.json({
-    ipaddress,
-    language,
-    software
-  });
-});
 
 
 
