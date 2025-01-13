@@ -1,32 +1,23 @@
-// Load environment variables from .env file
-require('dotenv').config();
-
 const express = require('express');
 const mongoose = require('mongoose');
 const validUrl = require('valid-url');
 const shortid = require('shortid');
+const cors = require('cors');
 
 // Basic Configuration
-const app = express();  // Initialize the Express app
+const app = express();
 const port = process.env.PORT || 3000;
 
-const cors = require('cors');
+// Middleware
 app.use(cors());
-
+app.use(express.json());
 app.use('/public', express.static(`${process.cwd()}/public`));
 
-app.get('/', function(req, res) {
-  res.sendFile(process.cwd() + '/views/index.html');
-});
-
-// Middleware
-app.use(express.json());
-
 // MongoDB Connection
-const mongoUri = process.env.MONGO_URI; // Mongo URI from environment variable
+const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
   console.error('MONGO_URI is not defined!');
-  process.exit(1); // Exit if MongoDB URI is not provided
+  process.exit(1);
 }
 
 mongoose.connect(mongoUri, {
@@ -47,6 +38,12 @@ const urlSchema = new mongoose.Schema({
 });
 
 const Url = mongoose.model('Url', urlSchema);
+
+// Homepage Route
+app.get('/', function(req, res) {
+  console.log('Serving index.html from:', process.cwd() + '/views/index.html');
+  res.sendFile(`${process.cwd()}/views/index.html`);
+});
 
 // Whoami API Route
 app.get("/api/whoami", (req, res) => {
@@ -117,7 +114,7 @@ app.get("/api/hello", (req, res) => {
 });
 
 app.get("/api/:date?", (req, res) => {
-  const dateString = req.params.date || ''; // If no date provided, use current date
+  const dateString = req.params.date || '';
   const date = dateString ? new Date(dateString) : new Date();
 
   if (isNaN(date.getTime())) {
