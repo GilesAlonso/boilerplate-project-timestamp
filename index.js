@@ -6,8 +6,16 @@ const mongoose = require('mongoose');
 const validUrl = require('valid-url');
 const shortid = require('shortid');
 
-// Initialize app
-const app = express();
+// Basic Configuration
+const port = process.env.PORT || 3000;
+
+app.use(cors());
+
+app.use('/public', express.static(`${process.cwd()}/public`));
+
+app.get('/', function(req, res) {
+  res.sendFile(process.cwd() + '/views/index.html');
+});
 
 // Middleware
 app.use(express.json());
