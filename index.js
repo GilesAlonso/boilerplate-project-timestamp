@@ -24,7 +24,45 @@ app.get("/api/hello", function (req, res) {
   res.json({greeting: 'hello API'});
 });
 
+// http://expressjs.com/en/starter/basic-routing.html
+app.get("/", function (req, res) {
+  res.sendFile(__dirname + '/views/index.html');
+});
 
+// Debugging log
+app.use((req, res, next) => {
+  console.log(`Received request for ${req.method} ${req.url}`);
+  next();
+});
+
+// API endpoint to handle date requests
+app.get("/api/:date?", function (req, res) {
+  let dateParam = req.params.date;
+
+  let date;
+
+  // If no date is provided, use the current date
+  if (!dateParam) {
+    date = new Date();
+  } else {
+    // Check if dateParam is a number (Unix timestamp in milliseconds)
+    if (!isNaN(dateParam)) {
+      date = new Date(parseInt(dateParam));
+    } else {
+      date = new Date(dateParam);
+    }
+  }
+
+  // Validate the date
+  if (date.toString() === "Invalid Date") {
+    res.json({ error: "Invalid Date" });
+  } else {
+    res.json({
+      unix: date.getTime(),
+      utc: date.toUTCString()
+    });
+  }
+});
 
 // Listen on port set in environment variable or default to 3000
 var listener = app.listen(process.env.PORT || 3000, function () {
