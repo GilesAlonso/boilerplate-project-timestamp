@@ -64,6 +64,21 @@ app.get("/api/:date?", function (req, res) {
   }
 });
 
+// /api/whoami endpoint
+app.get("/api/whoami", (req, res) => {
+  const ipaddress = req.ip;
+  const language = req.get('Accept-Language');
+  const software = req.get('User-Agent');
+
+  res.json({
+    ipaddress,
+    language,
+    software
+  });
+});
+
+
+
 // Listen on port set in environment variable or default to 3000
 var listener = app.listen(process.env.PORT || 3000, function () {
   console.log('Your app is listening on port ' + listener.address().port);
