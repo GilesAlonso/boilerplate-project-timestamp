@@ -1,16 +1,19 @@
-// Importing required modules
 const express = require('express');
 const mongoose = require('mongoose');
 const validUrl = require('valid-url');
 const shortid = require('shortid');
-const path = require('path');
+const cors = require('cors');
+const path = require('path'); // Add this to handle file paths
 
-// Initialize the Express application
+// Basic Configuration
 const app = express();
+const port = process.env.PORT || 3000;
 
-// Middleware to parse incoming requests
+// Middleware
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // Add this to parse form data
+app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve public folder for static assets
 
 // MongoDB Connection
 const mongoUri = process.env.MONGO_URI;
@@ -19,11 +22,16 @@ if (!mongoUri) {
   process.exit(1);
 }
 
-// Connect to MongoDB
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+  useUnifiedTopology: true
+})
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch(err => {
+    console.error('Failed to connect to MongoDB', err);
+  });
 
 // MongoDB Schema for URL shortener
 const urlSchema = new mongoose.Schema({
@@ -32,23 +40,6 @@ const urlSchema = new mongoose.Schema({
 });
 
 const Url = mongoose.model('Url', urlSchema);
-
-// MongoDB Schema for User (added to handle user-related routes)
-const userSchema = new mongoose.Schema({
-  username: String
-});
-
-const User = mongoose.model('User', userSchema);
-
-// MongoDB Schema for Exercise
-const exerciseSchema = new mongoose.Schema({
-  username: String,
-  description: String,
-  duration: Number,
-  date: String
-});
-
-const Exercise = mongoose.model('Exercise', exerciseSchema);
 
 // Homepage Route
 app.get('/', function(req, res) {
@@ -118,90 +109,6 @@ app.get('/api/shorturl/:shorturl', (req, res) => {
     });
 });
 
-// Log Exercise Routes (For Logging Exercises with Date Filtering)
-app.get("/api/users/:_id/logs", async (req, res) => {
-  const { _id } = req.params;
-  const { from, to, limit } = req.query;
-
-  try {
-    const user = await User.findById(_id);
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
-
-    let query = { username: user.username };
-
-    // If 'from' or 'to' query parameters are provided, handle date comparison
-    if (from || to) {
-      query.date = {};
-
-      // Convert 'from' and 'to' to Date objects
-      if (from) {
-        const fromDate = new Date(from);
-        query.date.$gte = fromDate.toDateString(); // Store the date as a string
-      }
-
-      if (to) {
-        const toDate = new Date(to);
-        query.date.$lte = toDate.toDateString(); // Store the date as a string
-      }
-    }
-
-    // Fetch exercises based on the query
-    let exercises = await Exercise.find(query).select('description duration date');
-
-    // Apply limit if present
-    if (limit) {
-      exercises = exercises.slice(0, parseInt(limit));
-    }
-
-    res.json({
-      username: user.username,
-      count: exercises.length,
-      _id: user._id,
-      log: exercises.map(e => ({
-        description: e.description,
-        duration: e.duration,
-        date: e.date
-      }))
-    });
-  } catch (error) {
-    console.error('Error fetching logs:', error); // Debugging output
-    res.status(500).send('Server Error');
-  }
-});
-
-// Function to add an exercise log
-app.post('/api/users/:_id/exercises', (req, res) => {
-  const { _id } = req.params;
-  const { description, duration, date } = req.body;
-
-  // Handle date if provided or set current date
-  const exerciseDate = date || new Date().toISOString();
-
-  const newExercise = new Exercise({
-    username: _id,
-    description,
-    duration,
-    date: exerciseDate
-  });
-
-  newExercise.save()
-    .then(exercise => {
-      res.json({
-        username: exercise.username,
-        description: exercise.description,
-        duration: exercise.duration,
-        date: exercise.date,
-        _id: _id
-      });
-    })
-    .catch(err => {
-      console.error('Error saving exercise:', err);
-      res.status(500).send('Server Error');
-    });
-});
-
 // Timestamp Microservice Routes
 app.get("/api/hello", (req, res) => {
   res.json({ greeting: 'hello API' });
@@ -224,5 +131,5 @@ app.get("/api/:date?", (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(Server is running on port ${PORT});
 });
