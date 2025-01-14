@@ -32,7 +32,6 @@ mongoose.connect(mongoUri, {
   .catch(err => {
     console.error('Failed to connect to MongoDB', err);
   });
-
 // MongoDB Schema for URL shortener
 const urlSchema = new mongoose.Schema({
   original_url: String,
@@ -51,7 +50,6 @@ app.get("/api/whoami", (req, res) => {
   const ipaddress = req.ip;
   const language = req.get('Accept-Language');
   const software = req.get('User-Agent');
-
   res.json({
     ipaddress,
     language,
@@ -62,21 +60,17 @@ app.get("/api/whoami", (req, res) => {
 // URL Shortener Routes
 app.post('/api/shorturl', (req, res) => {
   const { url } = req.body; // The form field name is 'url'
-
   // Check if the URL is valid
   if (!validUrl.isWebUri(url)) {
     return res.json({ error: 'invalid url' });
   }
-
   // Generate a unique short URL
   const shortUrl = shortid.generate();
-
   // Save to MongoDB
   const newUrl = new Url({
     original_url: url,
     short_url: shortUrl
   });
-
   newUrl.save()
     .then(() => {
       res.json({
@@ -92,14 +86,12 @@ app.post('/api/shorturl', (req, res) => {
 
 app.get('/api/shorturl/:shorturl', (req, res) => {
   const { shorturl } = req.params;
-
   // Find the corresponding URL in the database
   Url.findOne({ short_url: shorturl })
     .then(url => {
       if (!url) {
         return res.status(404).json({ error: 'No URL found for this short URL' });
       }
-
       // Redirect to the original URL
       res.redirect(url.original_url);
     })
@@ -117,11 +109,9 @@ app.get("/api/hello", (req, res) => {
 app.get("/api/:date?", (req, res) => {
   const dateString = req.params.date || '';
   const date = dateString ? new Date(dateString) : new Date();
-
   if (isNaN(date.getTime())) {
     return res.json({ error: 'Invalid Date' });
   }
-
   res.json({
     unix: date.getTime(),
     utc: date.toUTCString()
@@ -131,5 +121,5 @@ app.get("/api/:date?", (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(Server is running on port ${PORT});
+  console.log(`Server is running on port ${PORT}`);
 });
