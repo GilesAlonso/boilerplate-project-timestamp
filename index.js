@@ -12,8 +12,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+// MongoDB Connection
+const mongoUri = process.env.MONGO_URI;
+if (!mongoUri) {
+  console.error('MONGO_URI is not defined!');
+  process.exit(1);
+}
+
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/urlshortener', {
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -94,24 +102,7 @@ app.get('/api/shorturl/:shorturl', (req, res) => {
     });
 });
 
-// Timestamp Microservice Routes
-app.get("/api/hello", (req, res) => {
-  res.json({ greeting: 'hello API' });
-});
 
-app.get("/api/:date?", (req, res) => {
-  const dateString = req.params.date || '';
-  const date = dateString ? new Date(dateString) : new Date();
-
-  if (isNaN(date.getTime())) {
-    return res.json({ error: 'Invalid Date' });
-  }
-
-  res.json({
-    unix: date.getTime(),
-    utc: date.toUTCString()
-  });
-});
 
 // Log Exercise Routes (For Logging Exercises with Date Filtering)
 const mongoose = require('mongoose');
@@ -208,6 +199,26 @@ app.post('/api/users/:_id/exercises', (req, res) => {
       console.error('Error saving exercise:', err);
       res.status(500).send('Server Error');
     });
+});
+
+
+// Timestamp Microservice Routes
+app.get("/api/hello", (req, res) => {
+  res.json({ greeting: 'hello API' });
+});
+
+app.get("/api/:date?", (req, res) => {
+  const dateString = req.params.date || '';
+  const date = dateString ? new Date(dateString) : new Date();
+
+  if (isNaN(date.getTime())) {
+    return res.json({ error: 'Invalid Date' });
+  }
+
+  res.json({
+    unix: date.getTime(),
+    utc: date.toUTCString()
+  });
 });
 
 // Start the server
