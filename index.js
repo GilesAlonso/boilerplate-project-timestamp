@@ -110,15 +110,12 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     let query = { userId: _id };
     if (from || to) {
       query.date = {};
-      if (from) query.date.$gte = new Date(from).toDateString();
-      if (to) query.date.$lte = new Date(to).toDateString();
+      if (from) query.date.$gte = new Date(from).toISOString();
+      if (to) query.date.$lte = new Date(to).toISOString();
     }
 
-    let exercises = await Exercise.find(query).select('description duration date');
-    if (limit) {
-      exercises = exercises.slice(0, parseInt(limit));
-    }
-
+    let exercises = await Exercise.find(query).select('description duration date').limit(parseInt(limit) || 0);
+    
     res.json({
       username: user.username,
       count: exercises.length,
@@ -126,13 +123,14 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       log: exercises.map(e => ({
         description: e.description,
         duration: e.duration,
-        date: e.date
+        date: new Date(e.date).toDateString()
       }))
     });
   } catch (error) {
     res.status(500).send('Server Error');
   }
 });
+
 
 // Start the server
 app.listen(port, () => {
