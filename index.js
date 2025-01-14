@@ -110,16 +110,20 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     let logs = user.log;
     if (from) {
       const fromDate = new Date(from);
+      if (isNaN(fromDate)) throw new Error('Invalid from date');
       logs = logs.filter(log => new Date(log.date) >= fromDate);
     }
     if (to) {
       const toDate = new Date(to);
+      if (isNaN(toDate)) throw new Error('Invalid to date');
       logs = logs.filter(log => new Date(log.date) <= toDate);
     }
 
     // Apply limit if provided
     if (limit) {
-      logs = logs.slice(0, parseInt(limit));
+      const limitInt = parseInt(limit);
+      if (isNaN(limitInt)) throw new Error('Invalid limit value');
+      logs = logs.slice(0, limitInt);
     }
 
     // Format the response
@@ -134,10 +138,11 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       })),
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
   }
 });
+
 
 
 // Start the server
