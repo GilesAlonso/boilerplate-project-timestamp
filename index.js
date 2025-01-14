@@ -1,21 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const validUrl = require('valid-url');
-const shortid = require('shortid');
 const cors = require('cors');
-const path = require('path'); // Add this to handle file paths
+const path = require('path');
 
-// Basic Configuration
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Add this to parse form data
-app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve public folder for static assets
+app.use(express.urlencoded({ extended: true }));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// MongoDB Connection
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
   console.error('MONGO_URI is not defined!');
@@ -26,110 +21,120 @@ mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Failed to connect to MongoDB', err));
 
-// MongoDB Schema for URL shortener
-const urlSchema = new mongoose.Schema({
-  original_url: String,
-  short_url: String
+// Schemas
+const userSchema = new mongoose.Schema({
+  username: String
 });
 
-const Url = mongoose.model('Url', urlSchema);
+const exerciseSchema = new mongoose.Schema({
+  userId: mongoose.Schema.Types.ObjectId,
+  description: String,
+  duration: Number,
+  date: String
+});
+
+const User = mongoose.model('User', userSchema);
+const Exercise = mongoose.model('Exercise', exerciseSchema);
 
 // Homepage Route
-app.get('/', function(req, res) {
-  res.sendFile(path.join(__dirname, 'views', 'index.html')); // Serve index.html from views folder
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// Whoami API Route
-app.get("/api/whoami", (req, res) => {
-  const ipaddress = req.ip;
-  const language = req.get('Accept-Language');
-  const software = req.get('User-Agent');
-
-  res.json({
-    ipaddress,
-    language,
-    software
-  });
-});
-
-// URL Shortener Routes
-app.post('/api/shorturl', (req, res) => {
-  const { url } = req.body; // The form field name is 'url'
-
-  // Check if the URL is valid
-  if (!validUrl.isWebUri(url)) {
-    return res.json({ error: 'invalid url' });
+// User Routes
+app.post('/api/users', async (req, res) => {
+  const { username } = req.body;
+  try {
+    const newUser = new User({ username });
+    const savedUser = await newUser.save();
+    res.json({ username: savedUser.username, _id: savedUser._id });
+  } catch (error) {
+    res.status(500).send('Server Error');
   }
-
-  // Generate a unique short URL
-  const shortUrl = shortid.generate();
-
-  // Save to MongoDB
-  const newUrl = new Url({
-    original_url: url,
-    short_url: shortUrl
-  });
-
-  newUrl.save()
-    .then(() => {
-      res.json({
-        original_url: url,
-        short_url: shortUrl
-      });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).send('Server Error');
-    });
 });
 
-app.get('/api/shorturl/:shorturl', (req, res) => {
-  const { shorturl } = req.params;
-
-  // Find the corresponding URL in the database
-  Url.findOne({ short_url: shorturl })
-    .then(url => {
-      if (!url) {
-        return res.status(404).json({ error: 'No URL found for this short URL' });
-      }
-
-      // Redirect to the original URL
-      res.redirect(url.original_url);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).send('Server Error');
-    });
-});
-
-// Timestamp Microservice Routes
-app.get("/api/hello", (req, res) => {
-  res.json({ greeting: 'hello API' });
-});
-
-app.get("/api/:date?", (req, res) => {
-  const dateString = req.params.date || '';
-  const date = dateString ? new Date(dateString) : new Date();
-
-  if (isNaN(date.getTime())) {
-    return res.json({ error: 'Invalid Date' });
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username _id');
+    res.json(users);
+  } catch (error) {
+    res.status(500).send('Server Error');
   }
+});
 
-  res.json({
-    unix: date.getTime(),
-    utc: date.toUTCString()
-  });
+// Exercise Routes
+app.post('/api/users/:_id/exercises', async (req, res) => {
+  const { _id } = req.params;
+  const { description, duration, date } = req.body;
+  const formattedDate = date ? new Date(date).toDateString() : new Date().toDateString();
+
+  try {
+    const user = await User.findById(_id);
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    const newExercise = new Exercise({
+      userId: user._id,
+      description,
+      duration: parseInt(duration),
+      date: formattedDate
+    });
+
+    const savedExercise = await newExercise.save();
+    res.json({
+      username: user.username,
+      description: savedExercise.description,
+      duration: savedExercise.duration,
+      date: savedExercise.date,
+      _id: user._id
+    });
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
+});
+
+app.get('/api/users/:_id/logs', async (req, res) => {
+  const { _id } = req.params;
+  const { from, to, limit } = req.query;
+
+  try {
+    const user = await User.findById(_id);
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    let query = { userId: _id };
+    if (from || to) {
+      query.date = {};
+      if (from) query.date.$gte = new Date(from).toDateString();
+      if (to) query.date.$lte = new Date(to).toDateString();
+    }
+
+    let exercises = await Exercise.find(query).select('description duration date');
+    if (limit) {
+      exercises = exercises.slice(0, parseInt(limit));
+    }
+
+    res.json({
+      username: user.username,
+      count: exercises.length,
+      _id: user._id,
+      log: exercises.map(e => ({
+        description: e.description,
+        duration: e.duration,
+        date: e.date
+      }))
+    });
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
 });
 
 // Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
