@@ -104,44 +104,58 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 
     // Find the user by ID
     const user = await User.findById(_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    // Filter logs based on 'from' and 'to' dates if provided
     let logs = user.log;
+
+    // Process 'from' date
     if (from) {
       const fromDate = new Date(from);
-      if (isNaN(fromDate)) throw new Error('Invalid from date');
+      if (isNaN(fromDate)) {
+        return res.status(400).json({ error: 'Invalid from date' });
+      }
       logs = logs.filter(log => new Date(log.date) >= fromDate);
     }
+
+    // Process 'to' date
     if (to) {
       const toDate = new Date(to);
-      if (isNaN(toDate)) throw new Error('Invalid to date');
+      if (isNaN(toDate)) {
+        return res.status(400).json({ error: 'Invalid to date' });
+      }
       logs = logs.filter(log => new Date(log.date) <= toDate);
     }
 
-    // Apply limit if provided
+    // Apply limit
     if (limit) {
-      const limitInt = parseInt(limit);
-      if (isNaN(limitInt)) throw new Error('Invalid limit value');
+      const limitInt = parseInt(limit, 10);
+      if (isNaN(limitInt)) {
+        return res.status(400).json({ error: 'Invalid limit value' });
+      }
       logs = logs.slice(0, limitInt);
     }
 
     // Format the response
+    const formattedLogs = logs.map(log => ({
+      description: log.description,
+      duration: log.duration,
+      date: new Date(log.date).toDateString(),
+    }));
+
     res.json({
       username: user.username,
-      count: logs.length,
+      count: formattedLogs.length,
       _id: user._id,
-      log: logs.map(log => ({
-        description: log.description,
-        duration: log.duration,
-        date: new Date(log.date).toDateString(),
-      })),
+      log: formattedLogs,
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: err.message });
+    console.error('Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 
