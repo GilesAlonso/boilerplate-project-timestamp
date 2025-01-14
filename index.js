@@ -98,66 +98,41 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 });
 
 app.get('/api/users/:_id/logs', async (req, res) => {
-  try {
-    const { _id } = req.params;
-    const { from, to, limit } = req.query;
+  const { _id } = req.params;
+  const { from, to, limit } = req.query;
 
-    // Find the user by ID
+  try {
     const user = await User.findById(_id);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).send('User not found');
     }
 
-    let logs = user.log;
-
-    // Process 'from' date
-    if (from) {
-      const fromDate = new Date(from);
-      if (isNaN(fromDate)) {
-        return res.status(400).json({ error: 'Invalid from date' });
-      }
-      logs = logs.filter(log => new Date(log.date) >= fromDate);
+    let query = { userId: _id };
+    if (from || to) {
+      query.date = {};
+      if (from) query.date.$gte = new Date(from).toDateString();
+      if (to) query.date.$lte = new Date(to).toDateString();
     }
 
-    // Process 'to' date
-    if (to) {
-      const toDate = new Date(to);
-      if (isNaN(toDate)) {
-        return res.status(400).json({ error: 'Invalid to date' });
-      }
-      logs = logs.filter(log => new Date(log.date) <= toDate);
-    }
-
-    // Apply limit
+    let exercises = await Exercise.find(query).select('description duration date');
     if (limit) {
-      const limitInt = parseInt(limit, 10);
-      if (isNaN(limitInt)) {
-        return res.status(400).json({ error: 'Invalid limit value' });
-      }
-      logs = logs.slice(0, limitInt);
+      exercises = exercises.slice(0, parseInt(limit));
     }
-
-    // Format the response
-    const formattedLogs = logs.map(log => ({
-      description: log.description,
-      duration: log.duration,
-      date: new Date(log.date).toDateString(),
-    }));
 
     res.json({
       username: user.username,
-      count: formattedLogs.length,
+      count: exercises.length,
       _id: user._id,
-      log: formattedLogs,
+      log: exercises.map(e => ({
+        description: e.description,
+        duration: e.duration,
+        date: e.date
+      }))
     });
-  } catch (err) {
-    console.error('Error:', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (error) {
+    res.status(500).send('Server Error');
   }
 });
-
-
-
 
 // Start the server
 app.listen(port, () => {
