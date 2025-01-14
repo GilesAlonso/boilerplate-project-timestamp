@@ -12,7 +12,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 // MongoDB Connection
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
@@ -33,6 +32,23 @@ const urlSchema = new mongoose.Schema({
 });
 
 const Url = mongoose.model('Url', urlSchema);
+
+// MongoDB Schema for User (added to handle user-related routes)
+const userSchema = new mongoose.Schema({
+  username: String
+});
+
+const User = mongoose.model('User', userSchema);
+
+// MongoDB Schema for Exercise
+const exerciseSchema = new mongoose.Schema({
+  username: String,
+  description: String,
+  duration: Number,
+  date: String
+});
+
+const Exercise = mongoose.model('Exercise', exerciseSchema);
 
 // Homepage Route
 app.get('/', function(req, res) {
@@ -102,22 +118,7 @@ app.get('/api/shorturl/:shorturl', (req, res) => {
     });
 });
 
-
-
 // Log Exercise Routes (For Logging Exercises with Date Filtering)
-const mongoose = require('mongoose');
-
-// Define the Exercise Schema
-const exerciseSchema = new mongoose.Schema({
-  username: String,
-  description: String,
-  duration: Number,
-  date: String
-});
-
-const Exercise = mongoose.model('Exercise', exerciseSchema);
-
-// Route to get the log of a user
 app.get("/api/users/:_id/logs", async (req, res) => {
   const { _id } = req.params;
   const { from, to, limit } = req.query;
@@ -128,7 +129,7 @@ app.get("/api/users/:_id/logs", async (req, res) => {
       return res.status(404).send('User not found');
     }
 
-    let query = { userId: _id };
+    let query = { username: user.username };
 
     // If 'from' or 'to' query parameters are provided, handle date comparison
     if (from || to) {
@@ -200,7 +201,6 @@ app.post('/api/users/:_id/exercises', (req, res) => {
       res.status(500).send('Server Error');
     });
 });
-
 
 // Timestamp Microservice Routes
 app.get("/api/hello", (req, res) => {
